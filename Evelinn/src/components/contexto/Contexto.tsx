@@ -49,10 +49,31 @@ export interface IProyectos {
   link?: string;
 }
 
+export interface IHabilidad {
+  id?: string;
+  nombre: string;
+  categoria: string;
+  icono?: string;
+  creacion?: string;
+}
+
+export interface IEstudio {
+  id?: string;
+  created_at?: string;
+  titulo: string;
+  subtitulo?: string;
+  fecha?: string;
+  estado?: string;
+  etiquetas?: string[];
+  orden?: number;
+}
+
 interface Store {
   cursos: ICursos[];
   servicios: IServicio[];
   proyectos: IProyectos[];
+  habilidades: IHabilidad[];
+  estudios: IEstudio[];
   loading: boolean;
   error: string | null;
   addCurso: (curso: ICursos) => Promise<void>;
@@ -61,6 +82,10 @@ interface Store {
   deleteServicio: (id: number) => Promise<void>;
   addProyecto: (proyecto: IProyectos) => Promise<void>;
   deleteProyecto: (id: number) => Promise<void>;
+  addHabilidad: (habilidad: IHabilidad) => Promise<void>;
+  deleteHabilidad: (id: string) => Promise<void>;
+  addEstudio: (estudio: IEstudio) => Promise<void>;
+  deleteEstudio: (id: string) => Promise<void>;
 }
 
 const StoreContext = createContext<Store>({} as Store);
@@ -69,6 +94,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [cursos, setCursos] = useState<ICursos[]>([]);
   const [servicios, setServicios] = useState<IServicio[]>([]);
   const [proyectos, setProyectos] = useState<IProyectos[]>([]);
+  const [habilidades, setHabilidades] = useState<IHabilidad[]>([]);
+  const [estudios, setEstudios] = useState<IEstudio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,6 +107,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "Cursos" }, cargarCursos)
       .on("postgres_changes", { event: "*", schema: "public", table: "Servicios" }, cargarServicios)
       .on("postgres_changes", { event: "*", schema: "public", table: "Proyectos" }, cargarProyectos)
+      .on("postgres_changes", { event: "*", schema: "public", table: "habilidades" }, cargarHabilidades)
+      .on("postgres_changes", { event: "*", schema: "public", table: "estudios" }, cargarEstudios)
       .subscribe();
 
     return () => {
@@ -89,7 +118,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   async function cargarTodo() {
     setLoading(true);
-    await Promise.all([cargarCursos(), cargarServicios(), cargarProyectos()]);
+    await Promise.all([
+      cargarCursos(), 
+      cargarServicios(), 
+      cargarProyectos(), 
+      cargarHabilidades(),
+      cargarEstudios()
+    ]);
     setLoading(false);
   }
 
@@ -114,6 +149,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProyectos(data || []);
   }
 
+  async function cargarHabilidades() {
+    if (!supabase) return;
+    const { data, error } = await supabase.from("habilidades").select("*").order("creacion", { ascending: false });
+    if (error) { setError(error.message); return; }
+    setHabilidades(data || []);
+  }
+
+  async function cargarEstudios() {
+    if (!supabase) return;
+    // Nombre de tabla en minúsculas: 'estudios'
+    const { data, error } = await supabase.from("estudios").select("*");
+    if (error) { setError(error.message); return; }
+    setEstudios(data || []);
+  }
+
   async function addCurso(curso: ICursos) {
     if (!supabase) throw new Error("Supabase no está configurado");
     const { error } = await supabase.from("Cursos").upsert([curso]);
@@ -133,6 +183,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.from("Proyectos").upsert([proyecto]);
     if (error) throw error;
     await cargarProyectos();
+  }
+
+  async function addHabilidad(habilidad: IHabilidad) {
+    if (!supabase) throw new Error("Supabase no está configurado");
+    const { error } = await supabase.from("habilidades").upsert([habilidad]);
+    if (error) throw error;
+    await cargarHabilidades();
+  }
+
+  async function addEstudio(estudio: IEstudio) {
+    if (!supabase) throw new Error("Supabase no está configurado");
+    const { error } = await supabase.from("estudios").upsert([estudio]);
+    if (error) throw error;
+    await cargarEstudios();
   }
 
   async function deleteCurso(id: number) {
@@ -156,10 +220,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProyectos((prev) => prev.filter((t) => t.id !== id));
   }
 
+  async function deleteHabilidad(id: string) {
+    if (!supabase) return;
+    const { error } = await supabase.from("habilidades").delete().eq("id", id);
+    if (error) { console.error(error); return; }
+    setHabilidades((prev) => prev.filter((h) => h.id !== id));
+  }
+
+  async function deleteEstudio(id: string) {
+    if (!supabase) return;
+    const { error } = await supabase.from("estudios").delete().eq("id", id);
+    if (error) { console.error(error); return; }
+    setEstudios((prev) => prev.filter((e) => e.id !== id));
+  }
+
   return (
     <StoreContext.Provider value={{
-      cursos, servicios, proyectos, loading, error,
-      addCurso, deleteCurso, addServicio, deleteServicio, addProyecto, deleteProyecto
+      cursos, servicios, proyectos, habilidades, estudios, loading, error,
+      addCurso, deleteCurso, addServicio, deleteServicio, addProyecto, deleteProyecto, addHabilidad, deleteHabilidad, addEstudio, deleteEstudio
     }}>
       {children}
     </StoreContext.Provider>

@@ -17,6 +17,8 @@ import { AdminCursos } from "../pages/admin/adminpages/AdminCursos"
 import { AuthLayout } from "../layouts/AuthLayout"
 import { Login } from "../pages/auth/Login"
 import { StoreProvider } from "../components/contexto/Contexto"
+import { AdminHabilidades } from "../pages/admin/adminpages/AdminHabilidades"
+import { AdminEstudios } from "../pages/admin/adminpages/AdminEstudios"
 
 export const AppRouter = () => {
   return (
@@ -45,6 +47,9 @@ export const AppRouter = () => {
             <Route path="servicios" element={<AdminServicios />} />
             <Route path="proyectos" element={<AdminProyectos />} />
             <Route path="cursos" element={<AdminCursos />} />
+            <Route path="habilidades" element={<AdminHabilidades />} />
+            <Route path="estudios" element={<AdminEstudios />} />
+
           </Route>
 
           {/* Autenticación */}

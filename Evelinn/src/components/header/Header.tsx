@@ -13,7 +13,6 @@ const NAV = [
 ];
 
 const JK = "'Plus Jakarta Sans', sans-serif";
-const MN = "'JetBrains Mono', monospace";
 
 export const Header = () => {
   const location = useLocation();
@@ -75,8 +74,8 @@ export const Header = () => {
                style={{ fontFamily: JK, fontWeight: 700 }}>
               Evelinn J. Bautista
             </p>
-            <p className="text-[rgba(216,180,254,0.6)] text-[12px] tracking-widest mt-0.5 whitespace-nowrap"
-               style={{ fontFamily: MN }}>
+            <p className="text-[rgba(216,180,254,0.6)] text-[11px] tracking-widest mt-0.5 whitespace-nowrap"
+               style={{ fontFamily: JK }}>
               ASIR · Informática & Redes
             </p>
           </div>
@@ -141,7 +140,7 @@ export const Header = () => {
         <div className="hidden md:flex items-center gap-4 shrink-0">
           <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(249,168,212,0.08)] border border-[rgba(249,168,212,0.15)]">
             <span className="w-2 h-2 rounded-full bg-[#f9a8d4] animate-pulse" />
-            <span className="text-[#f9a8d4] text-[10.5px] tracking-wider whitespace-nowrap" style={{ fontFamily: MN }}>
+            <span className="text-[#f9a8d4] text-[10.5px] tracking-wider whitespace-nowrap font-bold font-display" >
               DISPONIBLE PRÁCTICAS / EMPLEO
             </span>
           </div>
@@ -203,12 +202,6 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center gap-2 mt-4">
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-full flex-1 min-w-0 bg-[rgba(249,168,212,0.1)]">
-              <span className="w-2 h-2 rounded-full bg-[#f9a8d4] shrink-0 animate-pulse" />
-              <span className="text-[#f9a8d4] text-[10px] truncate" style={{ fontFamily: MN }}>
-                DISPONIBLE
-              </span>
-            </div>
             <button className="px-4 py-2 rounded-xl text-white text-[13px] font-semibold shrink-0 bg-gradient-to-r from-[#ea698b] to-[#973aa8]"
                     style={{ fontFamily: JK }}>
               Descargar CV

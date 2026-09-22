@@ -9,19 +9,19 @@ import imgLogo from "../../assets/logo/LogoEv.png";
 const JK = "'Plus Jakarta Sans', sans-serif";
 
 const NAV = [
-  {  label: "Proyectos", href: "/proyectos" },
-  {  label: "Cursos", href: "/cursos" },
-  {  label: "Servicios", href: "/servicios" },
-  {  label: "Contacto", href: "/contacto" },
+  { label: "Proyectos", href: "/proyectos" },
+  { label: "Cursos", href: "/cursos" },
+  { label: "Servicios", href: "/servicios" },
+  { label: "Contacto", href: "/contacto" },
 ];
 
 // Asignamos el componente de react-icons correspondiente a cada red social
 const SOCIALS = [
-  { label: "Email", icon: LuMail },
-  { label: "GitHub", icon: FaGithub },
-  { label: "LinkedIn", icon: FaLinkedin },
-  { label: "Instagram", icon: FaInstagram },
-  { label: "Facebook", icon: FaFacebook },
+  { label: "Email", icon: LuMail, href: "mailto:evelinnjimz@gmail.com" },
+  { label: "GitHub", icon: FaGithub, href: "https://github.com/evelinn" },
+  { label: "LinkedIn", icon: FaLinkedin, href: "#" },
+  { label: "Instagram", icon: FaInstagram, href: "https://instagram.com/evelxn" },
+  { label: "Facebook", icon: FaFacebook, href: "#" },
 ];
 
 /* ── Component ──────────────────────────────────────────────── */
@@ -100,9 +100,13 @@ export function Footer() {
             <div className="flex items-center justify-center gap-2 flex-wrap">
               {SOCIALS.map((s, i) => {
                 const IconComponent = s.icon;
+                const isExternal = s.href.startsWith("http");
                 return (
-                  <button
+                  <a
                     key={s.label}
+                    href={s.href}
+                    target={isExternal ? "_blank" : undefined}
+                    rel={isExternal ? "noopener noreferrer" : undefined}
                     aria-label={s.label}
                     className="group w-[45px] h-[45px] sm:w-[46px] sm:h-[46px] flex items-center justify-center bg-[#08050e]/80 border border-purple-900/30 rounded-xl
                                transition-all duration-300 ease-[cubic-bezier(.34,1.56,.64,1)]
@@ -111,7 +115,7 @@ export function Footer() {
                     style={{ transitionDelay: `${visible ? .28 + i * .06 : 0}s` }}
                   >
                     <IconComponent size={18} className="text-gray-500/70 transition-colors duration-200 group-hover:text-purple-300" />
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -148,9 +152,10 @@ export function Footer() {
             </div>
 
             <button
-            type="button"
-            onClick={() => { window.location.href = "/login"; }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-900/10 border border-purple-900/20">
+              type="button"
+              onClick={() => { window.location.href = "/login"; }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-900/10 border border-purple-900/20"
+            >
               <LuLock size={12} className="text-purple-400/70" />
               <span className="font-display font-bold text-[12.5px] sm:text-[12px] text-purple-400/80 tracking-[.06em]">ADMIN</span>
             </button>

@@ -1,9 +1,20 @@
+import { useState, useEffect } from "react"
 import type { ReactNode } from "react"
-import {CapIcon,ChipIcon,CompassIcon,DownloadIcon,MailIcon,PinIcon,ServerIcon,TerminalIcon,} from "../../components/icons/Icons"
+import {
+  CapIcon,
+  ChipIcon,
+  CompassIcon,
+  DownloadIcon,
+  MailIcon,
+  PinIcon,
+  ServerIcon,
+  TerminalIcon,
+} from "../../components/icons/Icons"
 import imgavatar from "../../assets/logo/ProfileIcon.png"
+import { supabase } from "../../lib/supabaseClient"
 
 /* ------------------------------------------------------------------ */
-/*  Contenido                                                          */
+/*  Contenido & Tipos                                                 */
 /* ------------------------------------------------------------------ */
 
 const PROFILE = {
@@ -15,74 +26,41 @@ const PROFILE = {
   bio: "Administro servidores Linux y Windows y diseño infraestructuras de red seguras. Me apasiona la resolución metódica de problemas y la automatización mediante scripting.",
 }
 
-type Study = {
-  title: string
-  subtitle: string
-  meta: string
-  tone: "active" | "done" | "faded"
-  bullets: string[]
+type Estudios = {
+  id: string
+  titulo: string
+  subtitulo: string
+  fecha: string
+  estado: "active" | "done" | "faded"
+  etiquetas: string[]
+  orden: number
 }
 
-const STUDIES: Study[] = [
-  {
-    title: "2º C.F.G.S. Administración de Sistemas Informáticos en Red",
-    subtitle: "Especialización técnica avanzada y proyectos aplicados",
-    meta: "2025 — 2026 · En curso",
-    tone: "active",
-    bullets: [
-      "Seguridad y alta disponibilidad: hardening, cortafuegos y copias de seguridad.",
-      "Servicios de red (DNS, DHCP, Nginx) e implantación de aplicaciones web.",
-    ],
-  },
-  {
-    title: "1º C.F.G.S. Administración de Sistemas Informáticos en Red",
-    subtitle: "Fundamentos de infraestructura, redes y sistemas",
-    meta: "2024 — 2025 · Completado",
-    tone: "done",
-    bullets: [
-      "Administración de Debian, Ubuntu Server y Windows Server (Active Directory).",
-      "Redes: modelo OSI/TCP-IP, subnetting y VLANs en Cisco Packet Tracer.",
-    ],
-  },
-  {
-    title: "Bachillerato de Ciencias y Tecnología",
-    subtitle: "Educación Secundaria Postobligatoria",
-    meta: "2022 — 2024 · Completado",
-    tone: "faded",
-    bullets: ["Base sólida en razonamiento analítico, matemáticas y fundamentos tecnológicos."],
-  },
-]
-
-type Skill = {
-  icon: ReactNode
-  title: string
-  body: string
-  tags: string[]
+// Tipo que coincide exactamente con las columnas de tu tabla 'habilidades'
+type HabilidadItem = {
+  id: string
+  nombre: string
+  categoria: string
+  icono: string
+  creacion?: string
 }
 
-const SKILLS: Skill[] = [
-  {
-    icon: <ServerIcon />,
-    title: "Sistemas & Redes",
-    body: "Administración de servidores, directorio activo e interconexión de equipos.",
-    tags: ["Debian", "Ubuntu Server", "Windows Server", "Cisco Packet Tracer", "VLANs / TCP-IP"],
-  },
-  {
-    icon: <TerminalIcon />,
-    title: "Automatización",
-    body: "Scripts para simplificar tareas administrativas y control de versiones.",
-    tags: ["Python", "Bash Scripting", "Git & GitHub", "PowerShell"],
-  },
-  {
-    icon: <CompassIcon />,
-    title: "Análisis & Diagnóstico",
-    body: "Diagnóstico analítico de incidencias, documentación y trabajo en equipo.",
-    tags: ["Diagnóstico IT", "Documentación", "Hardening", "Trabajo en Equipo"],
-  },
-]
+// Función auxiliar para mapear el campo 'icono' a un icono de React
+const getIconComponent = (iconName: string) => {
+  switch (iconName.toLowerCase()) {
+    case "server":
+      return <ServerIcon />
+    case "terminal":
+      return <TerminalIcon />
+    case "compass":
+      return <CompassIcon />
+    default:
+      return <ChipIcon />
+  }
+}
 
 /* ------------------------------------------------------------------ */
-/*  Página                                                             */
+/*  Página                                                            */
 /* ------------------------------------------------------------------ */
 
 export function SobreMi() {
@@ -93,16 +71,16 @@ export function SobreMi() {
       <main className="mx-auto w-full max-w-4xl px-6 py-20 sm:py-28">
         <Hero />
         <Divider />
-        <Studies />
+        <Estudios />
         <Divider />
-        <Skills />
+        <Habilidades />
       </main>
     </div>
   )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Secciones                                                          */
+/*  Secciones                                                         */
 /* ------------------------------------------------------------------ */
 
 function Hero() {
@@ -125,14 +103,14 @@ function Hero() {
 
       <Reveal delay={140}>
         <div className="mb-4 flex flex-wrap items-center gap-2.5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-glow-pink/25 bg-glow-pink/10 px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-glow-pink">
+          <span className="inline-flex items-center gap-2 rounded-full border border-glow-pink/25 bg-glow-pink/10 px-3 py-1 font-display font-bold text-[10.5px] uppercase tracking-[0.04em] text-glow-pink">
             <span
               className="h-1.5 w-1.5 rounded-full bg-glow-pink"
               style={{ animation: "dot-ping 2s ease-in-out infinite" }}
             />
             {PROFILE.status}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-hair bg-white/[0.03] px-3 py-1 font-mono text-[11px] text-mute">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-hair bg-white/[0.03] px-3 py-1 font-display font-bold text-[11px] text-mute">
             <PinIcon /> {PROFILE.location}
           </span>
         </div>
@@ -169,91 +147,162 @@ function Hero() {
   )
 }
 
-const DOT_TONE: Record<Study["tone"], string> = {
+const DOT_TONE: Record<Estudios["estado"], string> = {
   active: "border-glow-pink bg-glow-pink/25",
   done: "border-glow-violet bg-glow-violet/25",
   faded: "border-mute/40 bg-ink",
 }
 
-function Studies() {
+function Estudios() {
+  const [estudios, setEstudios] = useState<Estudios[]>([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    async function fetchEstudios() {
+      try {
+        const { data, error } = await supabase
+          .from("estudios")
+          .select("*")
+          .order("orden", { ascending: true })
+
+        if (error) throw error
+        if (data) setEstudios(data as Estudios[])
+      } catch (err) {
+        console.error("Error consultando la tabla estudios:", err)
+      } finally {
+        setCargando(false)
+      }
+    }
+
+    fetchEstudios()
+  }, [])
+
   return (
     <Reveal delay={80} as="section">
       <SectionHeader eyebrow="Estudios" title="Trayectoria Académica" icon={<CapIcon />} />
 
-      <ol className="relative mt-10">
-        <span className="absolute bottom-2 left-[7px] top-2 w-px bg-gradient-to-b from-glow-pink/50 via-glow-violet/25 to-transparent" />
-        {STUDIES.map((s) => (
-          <li key={s.title} className="relative pb-11 pl-9 last:pb-0">
-            <span
-              className={`absolute left-0 top-1.5 h-[15px] w-[15px] rounded-full border-2 ${DOT_TONE[s.tone]}`}
-              style={s.tone === "active" ? { animation: "dot-ping 2.4s ease-out infinite" } : undefined}
-            />
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <h3
-                className={`font-display text-lg font-bold leading-snug ${
-                  s.tone === "faded" ? "text-fog/70" : "text-white"
-                }`}
-              >
-                {s.title}
-              </h3>
-              <span className="w-fit shrink-0 rounded-full border border-hair bg-white/[0.03] px-3 py-1 font-mono text-[11px] text-mute sm:ml-4">
-                {s.meta}
-              </span>
-            </div>
-            <p className="mt-1.5 text-sm font-medium text-glow-violet/80">{s.subtitle}</p>
-            <ul className="mt-3 space-y-1.5">
-              {s.bullets.map((b) => (
-                <li key={b} className="flex gap-2.5 text-[14.5px] leading-relaxed text-mute">
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-glow-violet/60" />
-                  <span>{b}</span>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ol>
+      {cargando ? (
+        <div className="mt-10 py-12 text-center text-sm font-medium text-mute/60 animate-pulse">
+          Cargando trayectoria académica...
+        </div>
+      ) : (
+        <ol className="relative mt-10">
+          <span className="absolute bottom-2 left-[7px] top-2 w-px bg-gradient-to-b from-glow-pink/50 via-glow-violet/25 to-transparent" />
+          {estudios.map((s) => (
+            <li key={s.id} className="relative pb-11 pl-9 last:pb-0">
+              <span
+                className={`absolute left-0 top-1.5 h-[15px] w-[15px] rounded-full border-2 ${DOT_TONE[s.estado]}`}
+                style={s.estado === "active" ? { animation: "dot-ping 2.4s ease-out infinite" } : undefined}
+              />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <h3
+                  className={`font-display text-lg font-bold leading-snug ${
+                    s.estado === "faded" ? "text-fog/70" : "text-white"
+                  }`}
+                >
+                  {s.titulo}
+                </h3>
+                <span className="w-fit shrink-0 rounded-full border border-hair bg-white/[0.03] px-3 py-1 font-display font-bold text-[11px] text-mute sm:ml-4">
+                  {s.fecha}
+                </span>
+              </div>
+              <p className="mt-1.5 text-sm font-medium text-glow-violet/80">{s.subtitulo}</p>
+              <ul className="mt-3 space-y-1.5">
+                {s.etiquetas?.map((b, index) => (
+                  <li key={index} className="flex gap-2.5 text-[14.5px] leading-relaxed text-mute">
+                    <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-glow-violet/60" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      )}
     </Reveal>
   )
 }
 
-function Skills() {
+function Habilidades() {
+  const [habilidades, setHabilidades] = useState<HabilidadItem[]>([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    async function fetchHabilidades() {
+      try {
+        const { data, error } = await supabase
+          .from("habilidades")
+          .select("*")
+          .order("creacion", { ascending: true })
+
+        if (error) throw error
+        if (data) setHabilidades(data as HabilidadItem[])
+      } catch (err) {
+        console.error("Error consultando la tabla habilidades:", err)
+      } finally {
+        setCargando(false)
+      }
+    }
+
+    fetchHabilidades()
+  }, [])
+
+  // Agrupamos los elementos por 'categoria'
+  const categoriasAgrupadas = habilidades.reduce<
+    Record<string, { icono: string; items: string[] }>
+  >((acc, item) => {
+    if (!acc[item.categoria]) {
+      acc[item.categoria] = {
+        icono: item.icono,
+        items: [],
+      }
+    }
+    acc[item.categoria].items.push(item.nombre)
+    return acc
+  }, {})
+
   return (
     <Reveal delay={80} as="section">
       <SectionHeader eyebrow="Habilidades clave" title="Enfoque Técnico" icon={<ChipIcon />} />
 
-      <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-        {SKILLS.map((card) => (
-          <article
-            key={card.title}
-            className="group relative flex flex-col overflow-hidden rounded-2xl border border-hair bg-white/[0.025] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-glow-violet/35 hover:bg-white/[0.05]"
-          >
-            <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-glow-violet/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
-            <div className="mb-4 flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-glow-pink/20 to-glow-violet/20 text-glow-pink ring-1 ring-inset ring-glow-violet/25">
-                {card.icon}
-              </span>
-              <h3 className="font-display text-base font-bold text-white">{card.title}</h3>
-            </div>
-            <p className="text-[14px] leading-relaxed text-mute">{card.body}</p>
-            <div className="mt-6 flex flex-1 flex-wrap content-end gap-2">
-              {card.tags.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-md border border-hair bg-ink/60 px-2.5 py-1 font-mono text-[11px] text-fog/75 transition-colors duration-300 group-hover:border-glow-violet/25"
-                >
-                  {t}
+      {cargando ? (
+        <div className="mt-10 py-12 text-center text-sm font-medium text-mute/60 animate-pulse">
+          Cargando habilidades...
+        </div>
+      ) : (
+        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+          {Object.entries(categoriasAgrupadas).map(([categoria, group]) => (
+            <article
+              key={categoria}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-hair bg-white/[0.025] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-glow-violet/35 hover:bg-white/[0.05]"
+            >
+              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-glow-violet/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-glow-pink/20 to-glow-violet/20 text-glow-pink ring-1 ring-inset ring-glow-violet/25">
+                  {getIconComponent(group.icono)}
                 </span>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
+                <h3 className="font-display text-base font-bold text-white">{categoria}</h3>
+              </div>
+              <div className="mt-4 flex flex-1 flex-wrap content-start gap-2">
+                {group.items.map((nombreSkill) => (
+                  <span
+                    key={nombreSkill}
+                    className="rounded-md border border-hair bg-ink/60 px-2.5 py-1 font-mono text-[11px] text-fog/75 transition-colors duration-300 group-hover:border-glow-violet/25"
+                  >
+                    {nombreSkill}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </Reveal>
   )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Primitivas de UI                                                   */
+/*  Primitivas de UI                                                  */
 /* ------------------------------------------------------------------ */
 
 function Reveal({

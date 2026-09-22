@@ -9,6 +9,8 @@ const NAV = [
   { label: "Proyectos", to: "/admin/proyectos", icon: Briefcase }, // ← Modificado aquí
   { label: "Cursos",    to: "/admin/cursos",    icon: BookOpen },
   { label: "Contacto", to: "/admin/sociales", icon: Mail },
+  { label: "Estudios", to: "/admin/estudios", icon: BookOpen },
+  { label: "Habilidades", to: "/admin/habilidades", icon: Wrench }
 ];
 
 export const SidebarAdmin = () => {
